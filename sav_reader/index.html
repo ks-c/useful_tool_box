@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPSS 变量字典原生提取器 (防截断终极版)</title>
+    <style>
+        /* 严谨学术灰度排版 */
+        :root {
+            --text-main: #111111;
+            --border-heavy: #000000;
+            --border-light: #cccccc;
+            --bg-body: #ffffff;
+            --bg-panel: #fcfcfc;
+        }
+
+        body { font-family: "Times New Roman", SimSun, "宋体", serif; color: var(--text-main); background-color: var(--bg-body); margin: 0; padding: 40px 20px; display: flex; justify-content: center; line-height: 1.6; }
+        .container { width: 100%; max-width: 1000px; }
+        h1 { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 30px; }
+
+        .control-panel { background-color: var(--bg-panel); border: 1px solid var(--border-light); padding: 20px; margin-bottom: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+        input[type="file"], select { font-family: inherit; font-size: 14px; padding: 4px; cursor: pointer; }
+        label { font-size: 14px; font-weight: bold; }
+        .filter-label { font-weight: normal; font-size: 13px; color: #444; display: flex; align-items: center; gap: 5px; }
+
+        #statusBox { width: 100%; font-size: 14px; font-weight: bold; display: none; margin-top: 10px; }
+        .status-error { color: #8b0000; } 
+        .status-success { color: var(--text-main); }
+        #errorDetail { width: 100%; display: none; text-align: left; background: #fff5f5; border: 1px solid #ffcccc; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
+
+        .table-caption { text-align: left; font-weight: bold; font-size: 15px; margin-bottom: 10px; }
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; border-top: 2px solid var(--border-heavy); border-bottom: 2px solid var(--border-heavy); }
+        th, td { padding: 8px 12px; vertical-align: top; word-break: break-word; }
+        th { font-weight: bold; border-bottom: 1px solid var(--border-heavy); }
+        tr:not(:last-child) td { border-bottom: 1px dashed var(--border-light); }
+        
+        #contentArea { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>基于原生解析的 SPSS (.sav) 变量与赋值提取</h1>
+
+    <div class="control-panel">
+        <label for="fileInput">选择数据 (.sav):</label>
+        <input type="file" id="fileInput" accept=".sav">
+        
+        <label for="encoding">编码:</label>
+        <select id="encoding">
+            <option value="utf-8">UTF-8 (默认)</option>
+            <option value="gb18030">GBK (仅老文件乱码时切换)</option>
+        </select>
+
+        <label class="filter-label">
+            <input type="checkbox" id="hideSysVars" checked> 
+            自动隐藏问卷星系统变量 (INDEX, TOTAL等)
+        </label>
+
+        <div id="statusBox"></div>
+        <div id="errorDetail"></div>
+    </div>
+
+    <div id="contentArea">
+        <div class="table-caption">表 1 变量字典与赋值说明</div>
+        <div class="table-wrapper">
+            <table id="metaTable">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">变量名称</th>
+                        <th style="width: 30%;">变量标签</th>
+                        <th style="width: 45%;">赋值字典</th>
+                    </tr>
+                </thead>
+                <tbody id="dictBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const encodingSel = document.getElementById('encoding');
+    const hideSysVars = document.getElementById('hideSysVars');
+    const statusBox = document.getElementById('statusBox');
+    const errorDetail = document.getElementById('errorDetail');
+    const contentArea = document.getElementById('contentArea');
+    const dictBody = document.getElementById('dictBody');
+
+    [fileInput, encodingSel, hideSysVars].forEach(el => {
+        el.addEventListener('change', async () => {
+            if (!fileInput.files[0]) return;
+            processFile(fileInput.files[0]);
+        });
+    });
+
+    function showStatus(msg, isError = false, detail = '') {
+        statusBox.style.display = 'block';
+        statusBox.textContent = msg;
+        statusBox.className = isError ? 'status-error' : 'status-success';
+        if (detail) { errorDetail.style.display = 'block'; errorDetail.textContent = detail; } 
+        else { errorDetail.style.display = 'none'; }
+    }
+
+    async function processFile(file) {
+        showStatus('正在执行底层二进制读取与长变量名映射...');
+        contentArea.style.display = 'none';
+        dictBody.innerHTML = '';
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const variables = parseSavDictionary(arrayBuffer, encodingSel.value, hideSysVars.checked);
+            
+            if (variables.length === 0) throw new Error("未找到任何有效变量，或所有变量均被筛选器过滤。");
+
+            renderTable(variables);
+            showStatus(`读取成功。共提取 ${variables.length} 个核心变量。`);
+            contentArea.style.display = 'block';
+
+        } catch (err) {
+            console.error(err);
+            showStatus('读取失败: ' + err.message, true, err.stack || '');
+        }
+    }
+
+    function parseSavDictionary(buffer, encoding, shouldFilter) {
+        const view = new DataView(buffer);
+        const decoder = new TextDecoder(encoding); 
+        
+        if (buffer.byteLength < 176) throw new Error("文件体积过小，并非完整的 SAV 文件。");
+        
+        const magic = new TextDecoder('ascii').decode(new Uint8Array(buffer, 0, 4));
+        if (magic === 'ZSAV') throw new Error("发现 ZSAV 压缩格式！请在 SPSS 中另存为，并取消右下角的【以压缩格式保存数据】。");
+        if (magic !== '$FL2') throw new Error("文件头校验失败，这不是标准的 SAV 数据。");
+
+        let isLittleEndian = true;
+        let layoutCode = view.getInt32(64, true);
+        if (layoutCode !== 2 && layoutCode !== 3) {
+            layoutCode = view.getInt32(64, false);
+            if (layoutCode === 2 || layoutCode === 3) isLittleEndian = false;
+            else throw new Error("无法识别字节序，文件头已损坏。");
+        }
+
+        let offset = 176; 
+        function readInt32() { const v = view.getInt32(offset, isLittleEndian); offset += 4; return v; }
+        function readFloat64() { const v = view.getFloat64(offset, isLittleEndian); offset += 8; return v; }
+        function readString(len) {
+            const arr = new Uint8Array(buffer, offset, len);
+            offset += len;
+            return decoder.decode(arr).replace(/\0/g, '').trim();
+        }
+
+        const variables = [];
+        let currentType3 = [];
+        let varIndex = 1;
+        const longNamesMap = {}; // 【核心修复】：用于存储真实长变量名的映射表
+
+        while (offset < view.byteLength) {
+            const recType = readInt32();
+            
+            if (recType === 999) break; // 数据区开始，停止解析字典
+            
+            if (recType === 2) {
+                // 读取 8 字节的被截断的短变量名
+                const type = readInt32();
+                const hasLabel = readInt32();
+                const missing = readInt32();
+                readInt32(); readInt32(); 
+                const shortName = readString(8);
+                
+                let label = "";
+                if (hasLabel === 1) {
+                    const labelLen = readInt32();
+                    label = readString(labelLen);
+                    offset += (4 - (labelLen % 4)) % 4; 
+                }
+                
+                if (missing > 0) offset += missing * 8; 
+                else if (missing < 0) offset += Math.abs(missing) * 8;
+                
+                if (type !== -1) {
+                    // 过滤问卷星生成的垃圾变量
+                    const isGarbage = /^(INDEX\d*|TOTAL[A-Z0-9]*|TOTALSEC)$/i.test(shortName);
+                    if (!(shouldFilter && isGarbage)) {
+                        variables.push({ dictIndex: varIndex, name: shortName, label, valueLabels: {}, isString: type > 0 });
+                    }
+                }
+                varIndex++;
+            }
+            else if (recType === 3) {
+                const count = readInt32();
+                currentType3 = [];
+                for (let i = 0; i < count; i++) {
+                    const raw8Bytes = new Uint8Array(buffer, offset, 8);
+                    const valFloat = readFloat64(); 
+                    const len = new Uint8Array(buffer, offset, 1)[0];
+                    offset += 1;
+                    const label = readString(len);
+                    offset += (8 - ((len + 1) % 8)) % 8; 
+                    currentType3.push({ raw8Bytes, valFloat, label });
+                }
+            }
+            else if (recType === 4) {
+                const count = readInt32();
+                for (let i = 0; i < count; i++) {
+                    const vIdx = readInt32();
+                    const targetVar = variables.find(v => v.dictIndex === vIdx);
+                    if (targetVar) {
+                        currentType3.forEach(item => {
+                            if (targetVar.isString) {
+                                const valStr = decoder.decode(item.raw8Bytes).replace(/\0/g, '').trim();
+                                targetVar.valueLabels[valStr] = item.label;
+                            } else {
+                                targetVar.valueLabels[item.valFloat] = item.label;
+                            }
+                        });
+                    }
+                }
+                currentType3 = []; 
+            }
+            else if (recType === 6) {
+                const lines = readInt32();
+                offset += lines * 80;
+            }
+            else if (recType === 7) {
+                const subtype = readInt32();
+                const size = readInt32();
+                const count = readInt32();
+                const dataLength = size * count;
+
+                // 【核心修复】：Subtype 13 存放着真正的中文长变量名！
+                if (subtype === 13) {
+                    const rawBytes = new Uint8Array(buffer, offset, dataLength);
+                    offset += dataLength;
+                    const mapStr = decoder.decode(rawBytes).replace(/\0/g, '').trim();
+                    
+                    // 格式为： 短名=真正长名\t短名2=真正长名2
+                    const pairs = mapStr.split('\t');
+                    pairs.forEach(pair => {
+                        const eqIdx = pair.indexOf('=');
+                        if (eqIdx !== -1) {
+                            const sName = pair.substring(0, eqIdx).trim();
+                            const lName = pair.substring(eqIdx + 1).trim();
+                            longNamesMap[sName] = lName;
+                        }
+                    });
+                } else {
+                    offset += dataLength; // 跳过其他不需要的类型
+                }
+            }
+            else {
+                console.warn(`跳过未知区块: ${recType}`);
+                break;
+            }
+        }
+        
+        // 【核心修复】：在返回数据前，把被截断的乱码（维克、V55_A等）还原为长变量名！
+        variables.forEach(v => {
+            if (longNamesMap[v.name]) {
+                v.name = longNamesMap[v.name];
+            }
+        });
+
+        // 终极过滤：即便长变量名中含有 INDEX/TOTAL，只要勾选了过滤，依然剔除
+        if (shouldFilter) {
+            return variables.filter(v => !/^(INDEX\d*|TOTAL[A-Z0-9]*|TOTALSEC)$/i.test(v.name));
+        }
+        
+        return variables;
+    }
+
+    function renderTable(variables) {
+        variables.forEach(v => {
+            const tr = document.createElement('tr');
+            
+            const tdName = document.createElement('td');
+            tdName.textContent = v.name || '-';
+            
+            const tdLabel = document.createElement('td');
+            tdLabel.textContent = v.label || '-';
+            
+            const tdValues = document.createElement('td');
+            const keys = Object.keys(v.valueLabels);
+            
+            if (keys.length > 0) {
+                // 以学术论文的规范格式进行拼接
+                tdValues.textContent = keys.map(k => `${k} = ${v.valueLabels[k]}`).join('; ');
+            } else {
+                tdValues.textContent = '';
+            }
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdLabel);
+            tr.appendChild(tdValues);
+            dictBody.appendChild(tr);
+        });
+    }
+</script>
+</body>
+</html>
