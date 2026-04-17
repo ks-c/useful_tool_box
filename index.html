@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Useful Tool Box - 实用工具集</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 学术化全局样式：衬线字体 + 沉稳配色 */
+        body {
+            font-family: "SimSun", "宋体", "Times New Roman", serif; /* 学术标准字体 */
+            background-color: #f9fbfd; /* 学术浅白底 */
+            color: #2d3748; /* 深灰正文 */
+            line-height: 1.8;
+            max-width: 720px; /* 单栏固定宽度，学术排版标准 */
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* 标题样式：学术化严谨排版 */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #4a5568;
+        }
+
+        /* 单栏布局容器 */
+        .tools-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        /* 学术风工具卡片：无花哨动效，简洁规整 */
+        .tool-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px; /* 学术风小圆角，极简 */
+            padding: 25px 30px;
+        }
+
+        .tool-card h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #2a4365; /* 学术藏蓝主色 */
+            margin-bottom: 10px;
+        }
+
+        .tool-card p {
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .tool-link {
+            color: #2b6cb0;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .tool-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 底部联系方式 + 赞赏码 */
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .email {
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .payment-img {
+            width: 180px;
+            height: auto;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .footer-note {
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部标题 -->
+    <header>
+        <h1>Useful Tool Box</h1>
+        <p class="subtitle">实用工具集 · 学术与办公辅助工具</p>
+    </header>
+
+    <!-- 单栏工具列表 -->
+    <div class="tools-container">
+        <!-- 工具1：Excel去重 -->
+        <div class="tool-card">
+            <h3>Excel Dedupe</h3>
+            <p>面向数据处理的Excel重复数据清除工具，适用于学术数据整理与办公表格优化。</p>
+            <a href="https://github.com/ks-c/useful_tool_box/tree/main/excel-dedupe" class="tool-link" target="_blank">查看项目详情</a>
+        </div>
+
+        <!-- 工具2：SAV阅读器（带GitHub Pages在线链接） -->
+        <div class="tool-card">
+            <h3>SAV Reader</h3>
+            <p>SPSS .sav数据文件在线预览工具，无需安装专业软件，支持学术调研数据快速查看。</p>
+            <a href="https://ks-c.github.io/useful_tool_box/sav_reader/" class="tool-link" target="_blank">在线使用工具</a>
+        </div>
+
+        <!-- 工具3：歌曲下载 -->
+        <div class="tool-card">
+            <h3>Song Download</h3>
+            <p>轻量化图形界面音频获取工具，操作简洁，无需复杂配置即可使用。</p>
+            <a href="https://github.com/ks-c/useful_tool_box/tree/main/song_download" class="tool-link" target="_blank">查看项目详情</a>
+        </div>
+
+        <!-- 新增工具：直接复制上面卡片修改即可 -->
+    </div>
+
+    <!-- 底部：联系方式 + 赞赏码 -->
+    <div class="footer">
+        <div class="email">联系邮箱：cj0819@foxmail.com</div>
+        <img src="payment.png" alt="赞赏码" class="payment-img">
+        <div class="footer-note">实用工具集 | 持续更新</div>
+    </div>
+</body>
+</html>
