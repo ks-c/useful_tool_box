@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPSS 变量字典原生提取器 (防截断终极版)</title>
+    <title>SPSS 变量标签提取器 </title>
     <style>
         /* 严谨学术灰度排版 */
         :root {
@@ -14,8 +14,20 @@
             --bg-panel: #fcfcfc;
         }
 
-        body { font-family: "Times New Roman", SimSun, "宋体", serif; color: var(--text-main); background-color: var(--bg-body); margin: 0; padding: 40px 20px; display: flex; justify-content: center; line-height: 1.6; }
-        .container { width: 100%; max-width: 1000px; }
+        /* 修复核心：删除flex，正常流式排版，内容垂直居中 */
+        body { 
+            font-family: "Times New Roman", SimSun, "宋体", serif; 
+            color: var(--text-main); 
+            background-color: var(--bg-body); 
+            margin: 0; 
+            padding: 40px 20px; 
+            line-height: 1.6;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 1000px; 
+            margin: 0 auto; /* 主体内容居中 */
+        }
         h1 { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 30px; }
 
         .control-panel { background-color: var(--bg-panel); border: 1px solid var(--border-light); padding: 20px; margin-bottom: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
@@ -80,6 +92,37 @@
 </div>
 
 
+<!-- ========== 通用联系方式 + 赞赏码模块（固定页面最底部居中） ========== -->
+<style>
+.universal-footer {
+    max-width: 1000px;
+    margin: 60px auto 0 auto;
+    padding-top: 25px;
+    border-top: 1px solid #cccccc;
+    text-align: center;
+    font-family: "Times New Roman", SimSun, "宋体", serif;
+    color: #111111;
+    font-size: 14px;
+}
+.universal-footer .email {
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+.universal-footer .payment {
+    margin: 10px 0;
+}
+.universal-footer .payment img {
+    width: 160px;
+    height: auto;
+    border: 1px solid #cccccc;
+}
+.universal-footer .copyright {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666666;
+}
+</style>
+
 <!-- ========== 通用联系方式 + 赞赏码模块（底部居中版） ========== -->
 <style>
 .universal-footer {
@@ -114,7 +157,7 @@
 <div class="universal-footer">
     <div class="email">联系邮箱：cj0819@foxmail.com</div>
     <div class="payment">
-        <img src="https://github.com/ks-c/useful_tool_box/blob/main/payment.jpg" alt="赞赏码">
+        <img src="https://ks-c.github.io/useful_tool_box/payment.jpg" alt="赞赏码">
     </div>
     <div class="copyright">实用工具集 | 学术辅助工具</div>
 </div>
