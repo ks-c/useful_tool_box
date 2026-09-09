@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML 可视化编辑器</title>
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="bar-row">
+    <div class="brand" data-icon="brackets">HTML 可视化编辑器</div>
+
+    <div class="group">
+      <button id="btn-open-folder" class="btn primary" title="选择包含网页的文件夹（推荐，可加载同目录的图片/CSS/JS）">选择文件夹</button>
+      <button id="btn-open-file" class="btn" title="打开单个 HTML 文件（不含同目录资源）">打开HTML</button>
+      <input type="file" id="file-input" accept=".html,.htm" hidden>
+    </div>
+
+    <span class="sep"></span>
+
+    <div class="group" title="编辑模式：点击选中/直接改文字；拖拽模式：按住元素直接移动">
+      <label class="switch" title="开启后点击元素进行编辑；关闭后页面可正常浏览、点击链接">
+        <input type="checkbox" id="chk-edit"><span id="lbl-edit">编辑</span>
+      </label>
+      <label class="switch" title="开启后按住元素直接拖动调整位置，无需确认">
+        <input type="checkbox" id="chk-drag"><span id="lbl-drag">拖拽</span>
+      </label>
+      <label class="posmode" title="平移：视觉移动不影响布局；绝对定位：真正重新定位、周围元素会重排">
+        位置
+        <select id="sel-posmode">
+          <option value="translate">平移</option>
+          <option value="absolute">绝对定位</option>
+        </select>
+      </label>
+    </div>
+
+    <span class="sep"></span>
+
+    <div class="group">
+      <button id="btn-undo" class="btn" disabled title="撤销上一步修改">撤销</button>
+      <button id="btn-redo" class="btn" disabled title="重做已撤销的修改">重做</button>
+    </div>
+
+    <span class="sep"></span>
+
+    <div class="group">
+      <button id="btn-export-html" class="btn primary" disabled title="下载修改后的完整 HTML 页面">导出</button>
+      <button id="btn-save-back" class="btn" disabled title="写回原文件（需 Chrome/Edge 文件夹模式）">保存</button>
+      <button id="btn-export-json" class="btn" disabled title="导出 JSON 格式的修改记录">记录</button>
+      <button id="btn-help" class="btn" title="使用帮助">帮助</button>
+    </div>
+  </div>
+
+  <div class="bar-row ribbon" id="edit-group" data-disabled="1" title="对当前选中元素生效">
+    <span class="elinfo" id="elinfo">未选中元素</span>
+    <button id="btn-edit-text" class="btn" title="编辑选中元素的文字（仅纯文本元素）">文字</button>
+    <button id="btn-painter" class="btn icon-only" data-icon="brush" title="格式刷：复制选中元素的样式，再点击目标元素应用（Esc 取消）"></button>
+    <div class="popover-host">
+      <button id="btn-font" class="btn" title="文字色 / 字号 / 字重 / 行高 / 字距 / 字体 / 斜体">字体</button>
+      <div id="pop-font" class="popover" hidden>
+        <div class="pop-title">字体（应用于选中元素）</div>
+        <div class="pop-row" data-prop="color">
+          <label>文字色</label><input type="color" class="pick"><span class="pop-val">—</span><button class="pop-clear">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>字号</label>
+          <input type="number" id="f-size" min="1" step="1"><select id="f-size-unit"><option>px</option><option>em</option><option>rem</option><option>%</option></select>
+          <button class="pop-clear" data-prop="font-size">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>字重</label>
+          <input type="number" id="f-weight" min="100" max="950" step="50" list="f-weight-list" placeholder="100-950">
+          <button class="pop-clear" data-prop="font-weight">清除</button>
+          <datalist id="f-weight-list">
+            <option value="100"><option value="200"><option value="300"><option value="400"><option value="500">
+            <option value="600"><option value="700"><option value="800"><option value="900"><option value="950">
+          </datalist>
+        </div>
+        <div class="pop-row">
+          <label>行高</label>
+          <input type="number" id="f-lh" min="0.1" step="0.05"><select id="f-lh-unit"><option value="">行</option><option>px</option><option>em</option><option>%</option></select>
+          <button class="pop-clear" data-prop="line-height">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>字距</label>
+          <input type="number" id="f-ls" step="0.5"><select id="f-ls-unit"><option>px</option><option>em</option></select>
+          <button class="pop-clear" data-prop="letter-spacing">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>斜体</label>
+          <input type="checkbox" id="f-italic"><span class="pop-val">斜体</span>
+          <button class="pop-clear" data-prop="font-style">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>字体</label>
+          <input type="text" id="f-family" list="f-family-list" placeholder="输入或选择字体，支持自定义">
+          <button class="pop-clear" data-prop="font-family">清除</button>
+          <datalist id="f-family-list">
+            <option value="微软雅黑"><option value="宋体"><option value="仿宋"><option value="黑体"><option value="楷体">
+            <option value="隶书"><option value="幼圆"><option value="等线"><option value="新宋体"><option value="华文宋体">
+            <option value="华文楷体"><option value="华文行楷"><option value="华文隶书"><option value="华文仿宋"><option value="华文细黑">
+            <option value="方正黑体简体"><option value="方正书宋简体"><option value="PingFang SC"><option value="Hiragino Sans GB">
+            <option value="Noto Sans SC"><option value="Noto Serif SC"><option value="思源黑体"><option value="思源宋体">
+            <option value="Segoe UI"><option value="Calibri"><option value="Cambria"><option value="Arial"><option value="Arial Black">
+            <option value="Helvetica"><option value="Times New Roman"><option value="Georgia"><option value="Verdana">
+            <option value="Tahoma"><option value="Trebuchet MS"><option value="Courier New"><option value="Impact">
+            <option value="Garamond"><option value="Palatino Linotype"><option value="Book Antiqua">
+            <option value="sans-serif"><option value="serif"><option value="monospace"><option value="cursive">
+          </datalist>
+        </div>
+        <div class="pop-tip">均为行内样式，仅作用于该元素；清除后恢复原样式。</div>
+      </div>
+    </div>
+    <div class="popover-host">
+      <button id="btn-bg" class="btn" title="背景色 / 透明度 / 阴影">背景</button>
+      <div id="pop-bg" class="popover" hidden>
+        <div class="pop-title">背景（应用于选中元素）</div>
+        <div class="pop-row" data-prop="background-color">
+          <label>背景色</label><input type="color" class="pick"><span class="pop-val">—</span><button class="pop-clear">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>透明度</label>
+          <input type="number" id="bg-opacity" min="0" max="1" step="0.05"><span class="pop-val">0 – 1</span>
+          <button class="pop-clear" data-prop="opacity">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>阴影</label>
+          <input type="checkbox" id="bg-shadow"><span class="pop-val">投影</span>
+          <button class="pop-clear" data-prop="box-shadow">清除</button>
+        </div>
+        <div class="pop-tip">均为行内样式，不影响布局。</div>
+      </div>
+    </div>
+    <div class="popover-host">
+      <button id="btn-border" class="btn" title="边框色 / 宽度 / 样式 / 圆角">边框</button>
+      <div id="pop-border" class="popover" hidden>
+        <div class="pop-title">边框（应用于选中元素）</div>
+        <div class="pop-row" data-prop="border-color">
+          <label>边框色</label><input type="color" class="pick"><span class="pop-val">—</span><button class="pop-clear">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>宽度</label>
+          <input type="number" id="b-width" min="0" step="1"><select id="b-width-unit"><option>px</option></select>
+          <button class="pop-clear" data-prop="border-width">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>样式</label>
+          <select id="b-style"><option value="">未设置</option><option value="solid">实线</option><option value="dashed">虚线</option><option value="dotted">点线</option><option value="double">双线</option><option value="none">无边框</option></select>
+          <button class="pop-clear" data-prop="border-style">清除</button>
+        </div>
+        <div class="pop-row">
+          <label>圆角</label>
+          <input type="number" id="b-radius" min="0" step="1"><select id="b-radius-unit"><option>px</option><option>%</option></select>
+          <button class="pop-clear" data-prop="border-radius">清除</button>
+        </div>
+        <div class="pop-tip">均为行内样式，不影响布局。</div>
+      </div>
+    </div>
+    <label class="coord" title="元素页面坐标">X <input type="number" id="coord-x" class="num"></label>
+    <label class="coord" title="元素页面坐标">Y <input type="number" id="coord-y" class="num"></label>
+    <button id="btn-apply-coord" class="btn" title="按坐标精确移动选中元素">应用坐标</button>
+    <button id="btn-parent" class="btn" title="切换到选中元素的父级元素">父级</button>
+    <div class="popover-host">
+      <button id="btn-children" class="btn" title="查看并选中子级元素">子级</button>
+      <div id="pop-children" class="popover" hidden>
+        <div class="pop-title">子级元素（点击选中）</div>
+        <ul id="children-list" class="pop-list"></ul>
+        <div class="pop-tip" id="children-empty">该元素没有子元素。</div>
+      </div>
+    </div>
+    <button id="btn-reset-el" class="btn" title="清除选中元素的全部修改（可撤销）">重置</button>
+  </div>
+</header>
+
+<div id="stage-wrap">
+  <div id="empty-state">
+    <div class="big" data-icon="brackets"></div>
+    <h2>加载本地网页，开始可视化编辑</h2>
+    <p>
+      点击「选择文件夹」并选中包含网页的目录（推荐，可自动加载同目录的图片 / CSS / JS），<br>
+      或点击「打开HTML」加载单个文件，也可以把文件夹或 HTML 文件直接拖拽到本窗口。
+    </p>
+    <div class="hints">
+      <div><i class="hicon" data-icon="text"></i><b>文字</b>：开启「编辑」后，点击文字直接修改，像 Word 一样</div>
+      <div><i class="hicon" data-icon="move"></i><b>拖拽</b>：开启「拖拽」后，按住元素直接移动；按住 Shift 可锁定横向 / 竖向</div>
+      <div><i class="hicon" data-icon="type"></i><b>样式</b>：选中元素后，用顶栏「字体 / 背景 / 边框」选项卡调整，顶栏不会遮挡页面</div>
+      <div><i class="hicon" data-icon="brush"></i><b>格式刷</b>：复制选中元素的样式，点击目标元素即可应用</div>
+      <div><i class="hicon" data-icon="up"></i><b>结构</b>：「父级 / 子级」逐层查看并切换选中元素</div>
+      <div><i class="hicon" data-icon="undo"></i><b>撤销</b>：所有修改（含重置、绝对定位转换）都可撤销 / 重做</div>
+      <div><i class="hicon" data-icon="square"></i><b>保证</b>：除文字、颜色、字体、位置外，页面结构、布局、CSS、图片、动画保持原样</div>
+    </div>
+  </div>
+  <iframe id="stage" hidden title="编辑舞台"></iframe>
+</div>
+
+<footer class="statusbar">
+  <span id="status-file">未加载页面</span>
+  <span id="status-edits">修改：0 处</span>
+  <span id="status-mode">位置方式：平移</span>
+  <span id="status-warn" class="warn" hidden></span>
+</footer>
+
+<div id="drop-overlay" hidden><div class="drop-inner">松开以加载 文件夹 / HTML 文件</div></div>
+
+<div id="modal-mask" hidden>
+  <div id="html-picker" class="modal" hidden>
+    <h3>选择要编辑的页面</h3>
+    <ul id="html-list"></ul>
+    <div class="modal-actions"><button id="btn-picker-cancel" class="btn">取消</button></div>
+  </div>
+  <div id="help-modal" class="modal" hidden>
+    <h3>使用帮助</h3>
+    <div class="help-body">
+      <h4>一、加载页面</h4>
+      <p>「选择文件夹」选中包含网页的目录后，从列表中选择入口 HTML。同目录下的图片、CSS、JS、字体等相对资源会被自动加载。也可以直接拖拽文件夹 / 多个文件到窗口。</p>
+      <h4>二、编辑（顶栏「编辑」开关）</h4>
+      <ul>
+        <li><b>改文字</b>：直接点击页面上的文字，即可像 Word 一样输入修改（自动全选，输入即替换）；Esc 放弃修改并保持选中。编辑模式下超链接、按钮等交互元素不会被触发。</li>
+        <li><b>选中元素</b>：点击元素出现橙色高亮；再次点击容器可逐级切换到父元素，或用顶栏「父级」按钮。</li>
+        <li><b>样式</b>：选中元素后，用顶栏「字体」（文字色、字号、字重 100–950 可自定义、行高、字距、字体、斜体）、「背景」（背景色、透明度、阴影）、「边框」（边框色、宽度、样式、圆角）调整。选项卡打开时显示该元素自身的行内值，未设置的项留空；均为行内样式、可单项清除。</li>
+        <li><b>格式刷</b>：点击格式刷图标吸取选中元素的样式，再点击目标元素即可应用（一条修改记录，可撤销，Esc 取消）。</li>
+        <li><b>位置</b>：顶栏 X/Y 输入精确坐标后点「应用坐标」；或开启「拖拽」后按住元素直接拖动（按住 Shift 锁定横向 / 竖向）。</li>
+        <li><b>结构</b>：「父级」上溯父元素；「子级」列出全部子元素，点击即可选中。</li>
+        <li>「位置」可选平移（不影响布局）或绝对定位（元素脱离文档流，切换与首次拖动都有提示、且可撤销）。</li>
+        <li>「重置」清除选中元素全部修改（可撤销）；「撤销 / 重做」管理全部修改历史。</li>
+      </ul>
+      <h4>三、导出</h4>
+      <p>「导出」下载修改后的完整页面（相对资源引用自动还原）；「保存」写回原目录（需 Chrome/Edge）；「记录」导出 JSON 补丁便于审计。</p>
+      <h4>四、已知限制</h4>
+      <ul>
+        <li>JS 动态渲染的页面（SPA）重渲染后会丢失编辑，静态页面不受影响。</li>
+        <li>页面自身 JS 中的相对路径 fetch/XHR 在编辑环境不可用（img/css/js 标签引用不受影响）。</li>
+        <li>绝对外链资源（如 CDN 图片）需要联网。</li>
+        <li>平移属于视觉偏移、不重新排版（这正是"布局保持原样"的保证）。</li>
+      </ul>
+    </div>
+    <div class="modal-actions"><button id="btn-help-close" class="btn primary">知道了</button></div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script src="runtime.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>

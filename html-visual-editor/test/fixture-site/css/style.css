@@ -1,0 +1,94 @@
+/* 山间咖啡馆 - 示例站点样式 */
+:root {
+  --brand: #7c3aed;
+  --accent: #f59e0b;
+  --ink: #1f2937;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: var(--ink);
+  background: #f9fafb;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 32px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+}
+.logo { width: 40px; height: 40px; }
+.title { font-size: 22px; margin: 0; color: var(--brand); }
+nav { margin-left: auto; display: flex; gap: 18px; }
+nav a { color: #4b5563; text-decoration: none; font-size: 14px; }
+nav a:hover { color: var(--brand); }
+
+.hero {
+  text-align: center;
+  padding: 64px 24px 48px;
+  background: linear-gradient(135deg, #ede9fe, #fef3c7);
+  animation: fadeInUp 0.8s ease both;
+}
+.hero h2 { font-size: 36px; margin: 0 0 12px; }
+.hero-text { color: #6b7280; font-size: 16px; }
+
+.btn {
+  margin-top: 20px;
+  padding: 10px 28px;
+  font-size: 15px;
+  color: #fff;
+  background: var(--brand);
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+}
+.btn:hover { background: #6d28d9; }
+
+.cards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding: 40px 24px;
+  flex-wrap: wrap;
+}
+.card {
+  width: 260px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.card.highlight { background: #fffbeb; border-color: #fbbf24; }
+.card h3 { margin: 0 0 8px; color: #111827; }
+.card p { color: #6b7280; font-size: 14px; margin: 0 0 12px; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 12px;
+  font-size: 12px;
+  color: #fff;
+  background: #ef4444;
+  border-radius: 999px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.card.highlight .badge { background: #f59e0b; }
+
+.footer-note { text-align: center; color: #9ca3af; font-size: 13px; padding-bottom: 40px; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
